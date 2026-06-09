@@ -1,0 +1,21 @@
+# Go build artifacts — anchored to root so `cmd/worker/` and `cmd/gateway/`
+# source dirs are NOT ignored (gitignore patterns without a leading slash
+# match at any depth).
+/worker
+/gateway
+*.test
+*.out
+
+# Resonate server local database
+resonate.db
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# IDE/editor
+.idea/
+.vscode/
+*.swp
+.DS_Store

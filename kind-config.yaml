@@ -1,0 +1,24 @@
+# Kind cluster configuration for Node Drain Orchestrator demo
+# Creates a 3-node cluster: 1 control-plane + 2 workers
+#
+# Usage: kind create cluster --config kind-config.yaml --name drain-demo
+
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: drain-demo
+nodes:
+  # Control plane node (won't be drained)
+  - role: control-plane
+    labels:
+      node-role: control-plane
+
+  # Worker nodes (will be drained)
+  - role: worker
+    labels:
+      node-role: worker
+      drain-target: "true"
+
+  - role: worker
+    labels:
+      node-role: worker
+      drain-target: "true"

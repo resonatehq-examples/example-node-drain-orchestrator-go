@@ -1,0 +1,206 @@
+# Test workloads for demonstrating node drain scenarios
+# These create various pod configurations to test drain behavior
+
+---
+# Namespace for test workloads
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: drain-demo
+  labels:
+    app: drain-demo
+
+---
+# Scenario 1: Simple pods that drain easily
+# These pods have short grace periods and no PDBs
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: simple-app
+  namespace: drain-demo
+  labels:
+    app: simple-app
+    scenario: happy-path
+spec:
+  replicas: 4
+  selector:
+    matchLabels:
+      app: simple-app
+  template:
+    metadata:
+      labels:
+        app: simple-app
+    spec:
+      terminationGracePeriodSeconds: 5
+      containers:
+        - name: app
+          image: nginx:alpine
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              memory: "32Mi"
+              cpu: "10m"
+            limits:
+              memory: "64Mi"
+              cpu: "50m"
+
+---
+# Scenario 2: Pods with a Pod Disruption Budget
+# This PDB allows only 1 pod to be unavailable at a time
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pdb-protected-app
+  namespace: drain-demo
+  labels:
+    app: pdb-protected-app
+    scenario: pdb-test
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: pdb-protected-app
+  template:
+    metadata:
+      labels:
+        app: pdb-protected-app
+    spec:
+      terminationGracePeriodSeconds: 10
+      containers:
+        - name: app
+          image: nginx:alpine
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              memory: "32Mi"
+              cpu: "10m"
+            limits:
+              memory: "64Mi"
+              cpu: "50m"
+
+---
+# PDB that allows controlled disruption
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: pdb-protected-app-pdb
+  namespace: drain-demo
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: pdb-protected-app
+
+---
+# Scenario 3: Blocking PDB (for human-in-the-loop demo)
+# This creates a situation where draining is blocked
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: critical-app
+  namespace: drain-demo
+  labels:
+    app: critical-app
+    scenario: blocking-pdb
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: critical-app
+  template:
+    metadata:
+      labels:
+        app: critical-app
+    spec:
+      terminationGracePeriodSeconds: 30
+      containers:
+        - name: app
+          image: nginx:alpine
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              memory: "32Mi"
+              cpu: "10m"
+            limits:
+              memory: "64Mi"
+              cpu: "50m"
+
+---
+# Blocking PDB - requires ALL pods to be available
+# This will block drain operations until manually overridden
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: critical-app-pdb
+  namespace: drain-demo
+  annotations:
+    description: "This PDB blocks all evictions - for demo purposes"
+spec:
+  minAvailable: 2  # With 2 replicas, this blocks any eviction
+  selector:
+    matchLabels:
+      app: critical-app
+
+---
+# Scenario 4: Long-running pod (for timeout demo)
+apiVersion: v1
+kind: Pod
+metadata:
+  name: long-running-job
+  namespace: drain-demo
+  labels:
+    app: long-running-job
+    scenario: timeout-test
+spec:
+  terminationGracePeriodSeconds: 300  # 5 minutes
+  containers:
+    - name: worker
+      image: busybox
+      command: ["sh", "-c", "echo 'Starting long job...'; sleep 3600"]
+      resources:
+        requests:
+          memory: "16Mi"
+          cpu: "5m"
+        limits:
+          memory: "32Mi"
+          cpu: "20m"
+  restartPolicy: Never
+
+---
+# DaemonSet pods (present on every node, tests daemon eviction)
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: node-monitor
+  namespace: drain-demo
+  labels:
+    app: node-monitor
+    scenario: daemonset-test
+spec:
+  selector:
+    matchLabels:
+      app: node-monitor
+  template:
+    metadata:
+      labels:
+        app: node-monitor
+    spec:
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
+      terminationGracePeriodSeconds: 5
+      containers:
+        - name: monitor
+          image: busybox
+          command: ["sh", "-c", "while true; do echo 'monitoring...'; sleep 60; done"]
+          resources:
+            requests:
+              memory: "8Mi"
+              cpu: "5m"
+            limits:
+              memory: "16Mi"
+              cpu: "10m"
