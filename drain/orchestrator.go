@@ -189,6 +189,10 @@ func (o *Orchestrator) DrainAllNodes(ctx *resonate.Context, args Args) (Result, 
 		}
 		log.Printf("[drain] operator decision for %s: %s", node.Name, decision)
 
+		// retry/force re-run the node once and store the new result. Like the
+		// TypeScript original these are one-shot: if the re-run is still blocked,
+		// that result is recorded and the loop moves to the next node — the
+		// decision prompt is not re-opened for the same node.
 		switch decision {
 		case DecisionAbort:
 			completedAt, err := o.checkpointNow(ctx)

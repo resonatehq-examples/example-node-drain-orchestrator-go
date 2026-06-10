@@ -29,7 +29,7 @@ func (o *Orchestrator) DrainAllNodes(ctx *resonate.Context, args Args) (Result, 
     _ = nodesF.Await(&nodes)
 
     for _, node := range nodes {
-        res, _ := o.drain(ctx, node.Name, args.Options) // checkpointed ctx.Run
+        res, _ := o.drainNode(ctx, node.Name, args.Options) // checkpointed ctx.Run
 
         if res.Success || args.Options.Force {
             continue
@@ -161,6 +161,7 @@ The workflow resumes the instant the promise settles. To see crash recovery, kil
 | `/drain`                 | POST   | Start a drain (`{options?, nodeSelector?}`)       |
 | `/decision`              | POST   | Resolve a block (`{decision, promiseId}`)         |
 | `/skip,/retry,/abort,/force` `/{promiseId}` | POST | Resolve a block with a fixed decision |
+| `/operation`             | DELETE | Clear the in-process operation-ID tracker (for testing/reset) |
 
 The `promiseId` is printed in the worker logs when a node blocks.
 
@@ -186,7 +187,8 @@ The `promiseId` is printed in the worker logs when a node blocks.
 example-node-drain-orchestrator-go/
 ├── drain/
 │   ├── orchestrator.go   workflow + checkpointed steps (DrainAllNodes, drainSingleNode, getNodes)
-│   └── types.go          options, args, results, decision enum, shared constants
+│   ├── types.go          options, args, results, decision enum, shared constants
+│   └── register_test.go  compile-time step-signature guards + a localnet Register check
 ├── internal/k8s/
 │   └── k8s.go            client-go wrappers (cordon, evict, delete, wait loops)
 ├── cmd/
