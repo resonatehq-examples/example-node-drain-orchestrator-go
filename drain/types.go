@@ -42,6 +42,10 @@ func (d Decision) Valid() bool {
 
 // Options tune a drain operation. Timeouts are milliseconds to mirror the
 // TypeScript example's shape; GracePeriodSeconds is the pod termination grace.
+//
+// DeleteLocalData is accepted for parity with the TypeScript example but is not
+// enforced here (nor in the TS original) — the Eviction API handles local-data
+// cleanup at the kubelet level.
 type Options struct {
 	EvictionTimeoutMs  int  `json:"evictionTimeoutMs"`
 	DrainTimeoutMs     int  `json:"drainTimeoutMs"`
