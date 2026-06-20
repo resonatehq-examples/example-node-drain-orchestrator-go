@@ -82,7 +82,7 @@ The worker and gateway run in **different Resonate groups**. The gateway only cr
   ```sh
   brew install resonatehq/tap/resonate
   ```
-  Other install paths: <https://docs.resonatehq.io/get-started/install>.
+  Other install paths: <https://docs.resonatehq.io/get-started/quickstart>.
 
 ## Setup
 
@@ -216,7 +216,7 @@ The gateway resolves the decision promise through the low-level `r.Sender().Prom
 ## Next steps
 
 - [Human-in-the-loop](https://docs.resonatehq.io/get-started/examples/human-in-the-loop) — the pattern behind the blocked-drain pause.
-- [Durable promises](https://docs.resonatehq.io/concepts/durable-promises) — how checkpointed steps survive crashes.
+- [Durable promises](https://docs.resonatehq.io/learn/durable-promises) — how checkpointed steps survive crashes.
 - [Go SDK reference](https://docs.resonatehq.io/develop/go) — installation and the full client/context API.
 - **Coming from Temporal?** See [MIGRATING-FROM-TEMPORAL.md](MIGRATING-FROM-TEMPORAL.md) — a side-by-side port of the matching `temporalio/samples-go` examples (`saga` + `await-signals`).
 
